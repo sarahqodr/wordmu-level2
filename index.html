@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wordmu Lv.2 - Word Review Tool</title>
+  <style>
+    body {
+      font-family: system-ui, Apple Color Emoji, Segoe UI Emoji, sans-serif;
+      font-size: 1.5rem;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    #word {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    #counter, #phase {
+      margin: 10px 0;
+    }
+
+    .main-buttons button {
+      font-size: 1rem;
+	 margin-bottom: 5px;
+      padding: 12px 24px;
+      margin:10px;
+      cursor: pointer;
+    }
+
+    .meaning-buttons {
+      margin-top: 3px;
+    }
+
+    .meaning-buttons button {
+      font-size: 0.85rem;
+      padding: 8px 16px;
+      margin: 4px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+
+    .meaning-buttons button:hover {
+      background-color: #e0e0e0;
+    }
+
+    #definition {
+      max-width: 600px;
+      margin: 10px auto;
+ margin-top: 10px;
+      font-size: 1rem;
+      background: #f3f3f3;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    #reset-btn {
+      font-size: 0.8rem;
+      margin-top: 5px;
+      padding: 8px 16px;
+      cursor: pointer;
+
+    }
+
+#phase {
+  font-size: 0.8rem;
+
+}
+
+#voice-buttons {
+  margin-top: -32px; 
+  margin-bottom: 15px;
+}
+
+#voice-buttons button {
+  font-size: 0.85rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin: 0 4px;
+  opacity: 0.6;
+}
+
+#voice-buttons button:hover {
+  opacity: 1;
+}
+#word-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+#voice-buttons button {
+  font-size: 0.85rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+  opacity: 0.6;
+}
+
+#voice-buttons button:hover {
+  opacity: 1;
+}
+  </style>
+
+<style>
+@media (max-width: 600px) {
+  body {
+    padding: 0 10px;
+    font-size: 1rem;
+  }
+
+  #word {
+    font-size: 1.6rem;
+    margin-bottom: 0;
+  }
+
+  #voice-buttons {
+    margin-top: 0.3rem; 
+  }
+
+  #definition {
+    padding: 15px;
+    font-size: 0.85rem;
+  }
+
+  .main-buttons button,
+  .meaning-buttons button,
+  #reset-btn {
+    padding: 10px 20px;
+  }
+}
+
+
+</style>
+
+
+</head>
+<body>
+
+<h1 id="word">Word will show here</h1>
+<div id="voice-buttons">
+ <button class="speak-button" onclick="speak('US')" title="US pronunciation">US 🔈</button>
+  <button class="speak-button" onclick="speak('UK')" title="UK pronunciation">UK 🔈</button>
+</div>
+
+<p style="font-size: 0.8rem; color: #777; margin-top: -10px;">
+  US/UK may sound the same on mobile phone. Try use Chrome on desktop.
+</p>
+
+  <p id="counter">Words done: 0</p>
+  <p id="phase"></p>
+
+  <div class="main-buttons">
+    <button onclick="markKnown()">✅ I know this</button>
+    <button onclick="markUnknown()">❌ Ask me later </button>
+  </div>
+
+  <div class="meaning-buttons">
+    <button onclick="fetchDefinition()">❓ Quick definition </button>
+    <button onclick="openCambridge()">📖 Full definition </button>
+  </div>
+
+  <div id="definition"></div>
+
+  <button id="reset-btn" onclick="startOver()" onmouseover="showTooltip()" onmouseout="hideTooltip()">
+  🔄 Start over
+</button>
+<div id="tooltip" style="display:none; position:absolute; background:#333; color:#fff; padding:5px 10px; border-radius:5px; font-size:0.85rem;">Reset all your progress and start fresh.</div>
+
+<div style="margin-top: 20px; font-size: 0.85rem;">
+  <span onclick="exportProgress()" style="cursor: pointer; color: #007bff; text-decoration: underline;">📤 Export progress</span>
+  |
+  <span onclick="document.getElementById('importFile').click()" style="cursor: pointer; color: #007bff; text-decoration: underline;">📥 Import progress</span>
+  <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importProgress(event)">
+</div>
+
+ <script>
+let isAllDone = false;
+
+const STORAGE_PREFIX = "wordmu-level2-";
+
+const allWords = [
+   "abolish", "abortion", "absence", "absent", "absorb", "abstract", "absurd", "abuse", "academy", "accelerate", "accent", "acceptance", "accessible", "accidentally", "accommodate", "accommodation", "accomplish", "accomplishment", "accordingly", "accountability", "accountable", "accountant", "accumulate", "accumulation", "accuracy", "accurately", "accusation", "accused", "acid", "acquisition", "acre", "activate", "activation", "activist", "acute", "adaptation", "addiction", "additionally", "adequate", "adequately", "adhere", "adjacent", "adjust", "adjustment", "administer", "administrative", "administrator", "admission", "adolescent", "adoption", "adverse", "advocate", "aesthetic", "affection", "affordable", "aftermath", "aged", "aggression", "agricultural", "agriculture", "aide",
+"AIDS", "alert", "alien", "align", "alignment", "alike", "allegation", "allege", "allegedly", "alliance", "allocate", "allocation", "allowance", "ally", "alongside", "altogether", "aluminum", "amateur", "ambassador", "ambitious", "ambulance", "amend", "amendment", "amid", "amusing", "analogy", "analyst", "ancestor", "anchor", "angel", "animation", "annually", "anonymous", "anticipate", "anxiety", "apology", "apparatus", "apparel", "appealing", "appetite", "applaud", "applicable", "applicant", "appoint", "appreciation", "appropriately", "arbitrary", "architectural", "archive", "arena", "arm", "array", "arrow", "articulate", "artwork", "ash", "aspiration", "aspire", "assassination", "assault", "assemble",
+"assembly", "assert", "assertion", "asset", "assign", "assistance", "assumption", "assurance", "assure", "astonishing", "asylum", "athletic", "atrocity", "attachment", "attain", "attendance", "attribute", "auction", "audio", "audit", "authentic", "authorize", "auto", "autonomy", "autumn", "availability", "await", "awareness", "awkward", "backdrop", "backing", "backup", "badge", "bail", "balanced", "ballet", "balloon", "ballot", "bankruptcy", "banner", "bare", "barely", "bargain", "barrel", "basement", "basket", "bass", "bat", "battlefield", "bay", "beam", "beast", "behalf", "behavioral", "beloved", "bench", "benchmark", "beneath", "beneficial", "beneficiary", "beside",
+"besides", "betray", "beverage", "bias", "bid", "bind", "biography", "biological", "bishop", "bizarre", "blade", "blanket", "blast", "bleed", "blend", "bless", "blessing", "blow", "boast", "bold", "bombing", "bonus", "booking", "boom", "boost", "bounce", "bound", "boundary", "bow", "breach", "breakdown", "breakthrough", "breed", "brick", "briefly", "broadband", "broadcaster", "broadly", "browser", "brutal", "buck", "buddy", "buffer", "bug", "bulk", "burden", "bureaucracy", "burial", "burst", "cabin", "cabinet", "calculation", "canal", "candle", "canvas", "capability", "capitalism", "capitalist", "carbon", "cargo", "carriage", "carve", "casino", "castle", "casual", "casualty", "catalog", "cater", "cattle", "caution", "cautious", "cave", "cease", "cemetery", "certainty", "certificate", "challenging", "chamber", "championship", "chaos", "characterize", "charm", "charming", "charter", "chase", "cheek", "cheer", "choir", "chop", "chronic", "chunk", "circuit", "circulate", "circulation", "citizenship", "civic", "civilian", "civilization", "clarify", "clarity", "clash", "classification", "classify", "cliff", "cling", "clinic", "clinical", "clip", "closure", "cluster", "coalition", "coastal", "cocktail", "cognitive", "coincide", "coincidence", "collaborate", "collaboration", "collective", "collector", "collision", "colonial", "colony", "colorful", "columnist", "combat", "comic", "commander", "commence", "commentary", "commentator",
+"commerce", "commissioner", "commodity", "communist", "companion", "comparable", "comparative", "compassion", "compel", "compelling", "compensate", "compensation", "competence", "competent", "compile", "complement", "completion", "complexity", "compliance", "complication", "comply", "compose", "composer", "composition", "compound", "comprehensive", "comprise", "compromise", "compulsory", "compute", "conceal", "concede", "conceive", "conception", "concession", "concrete", "condemn", "confer", "confess", "confession", "configuration", "confine", "confirmation", "confront", "confrontation", "confusion", "congratulate", "congregation", "congressional", "conquer", "conscience", "consciousness", "consecutive", "consensus", "consent", "consequently", "conservation", "conserve", "considerable", "considerably", "consistency", "consistently", "consolidate", "conspiracy", "constitute", "constitution", "constitutional", "constraint", "consult", "consultant",
+"consultation", "consumption", "contemplate", "contempt", "contend", "contender", "content", "contention", "continually", "contractor", "contradiction", "contrary", "contributor", "controversial", "controversy", "convenience", "convention", "conventional", "conversion", "convey", "convict", "conviction", "convincing", "cooperate", "cooperative", "coordinate", "coordination", "coordinator", "cop", "cope", "copper", "copyright", "corporation", "correction", "correlate", "correlation", "correspond", "correspondence", "correspondent", "corresponding", "corridor", "corrupt", "corruption", "costly", "councilor", "counseling", "counselor", "counter", "counter", "counterpart", "countless", "coup", "courtesy", "coverage", "cowboy", "crack", "craft", "crawl", "creativity", "creator", "credibility", "credible", "creep", "critically", "critique", "crown", "crude", "cruise", "crush", "crystal", "cue", "cult", "cultivate", "curiosity", "curious", "curriculum", "custody", "cute", "cutting", "cynical", "dairy", "dam", "damaging", "dare", "darkness", "database", "dawn", "deadline", "deadly", "dealer", "debris", "debut", "decision-making", "decisive", "deck", "declaration", "dedicated", "dedication", "deed", "deem", "default", "defect", "defender", "defensive", "deficiency", "deficit", "defy", "delegate", "delegation", "delete", "delicate", "delighted", "democracy", "democratic", "demon", "demonstration", "denial", "denounce", "dense", "density", "depart", "dependence", "dependent", "depict", "deploy", "deployment", "deposit", "depression", "deprive", "deputy", "derive", "descend", "descent", "designate", "desirable", "desktop", "desperately", "destruction", "destructive", "detain", "detection", "detention", "deteriorate", "determination", "devastate", "devil", "devise", "devote", "diagnose", "diagnosis", "dictate", "dictator", "differ", "differentiate", "dignity", "dilemma", "dime", "dimension", "diminish", "dip", "diplomat", "diplomatic", "directory", "disability", "disabled", "disagreement", "disappoint", "disappointment", "disastrous", "discard", "discharge", "disclose", "disclosure", "discourage", "discourse", "discretion", "discrimination", "dismissal", "disorder", "displace", "disposal", "dispose", "dispute", "disrupt", "disruption", "dissolve", "distant", "distinct", "distinction", "distinctive", "distinguish", "distort", "distract", "distress", "disturb", "disturbing", "dive", "diverse", "diversity", "divert", "divine", "divorce", "doctrine", "documentation", "domain", "dominance", "dominant", "donation", "donor", "dose", "dot", "drain", "dramatically", "drift", "driving", "drought", "drown", "dual", "dub", "dull", "dumb", "dump", "duo", "duration", "dynamic", "eager", "earnings", "ease", "echo", "ecological", "economics", "economist", "editorial", "educator", "effectiveness", "efficiency", "efficiently", "ego", "elaborate", "elbow", "electoral", "electronics", "elegant", "elementary", "elevate", "eligible", "eliminate", "elite", "embark", "embarrassment", "embassy", "embed", "embody", "embrace", "emergence", "emission", "emotionally", "empire", "empirical", "empower", "enact", "encompass", "encouragement", "encouraging", "endeavor", "endless", "endorse", "endorsement", "endure", "enforce", "enforcement", "engagement", "engaging", "enjoyable", "enrich", "enroll", "ensue", "enterprise", "entertaining", "enthusiast", "entitle", "entity", "entrepreneur", "envelope", "epidemic", "equality", "equation", "equip", "equivalent", "era", "erect", "erupt", "escalate", "essence", "essentially", "establishment", "eternal", "ethic", "ethnic", "evacuate", "evaluation", "evident", "evoke", "evolution", "evolutionary", "evolve", "exaggerate", "exceed", "excellence", "exception", "exceptional", "excess", "excessive", "exclude", "exclusion", "exclusive", "exclusively", "execute", "execution", "exert", "exile", "exotic", "expansion", "expedition", "expenditure", "experimental", "expertise", "expire", "explicit", "explicitly", "exploit", "exploitation", "explosive", "exposure", "extension", "extensive", "extensively", "extract", "extremist", "fabric", "fabulous", "facilitate", "faction", "faculty", "fade", "failed", "fairness", "fake", "fame", "fantasy",
+"fare", "fatal", "fate", "favorable", "feat", "felony", "feminist", "fiber", "fierce", "filmmaker", "filter", "fine", "firearm", "firefighter", "firework", "firm", "firmly", "fiscal", "fit", "flavor", "flaw", "flawed", "flee", "fleet", "flesh", "flexibility", "flourish", "fluid", "fond", "fool", "footage", "forbid", "forecast", "foreigner", "forge", "format", "formation", "formerly", "formula", "formulate", "forth", "forthcoming", "fortunate", "forum", "fossil", "foster", "foundation", "founder", "fraction", "fragile", "fragment", "framework", "franchise", "frankly", "fraud", "freely", "frequent", "freshman", "frustrated", "frustrating", "frustration", "fulfill", "full-time", "functional", "fundamentally", "fundraising", "funeral", "furious", "gallon", "gambling", "gaming", "gathering", "gay", "gaze", "gear", "gender", "gene", "generic", "genetic", "genius", "genocide", "genuine", "genuinely", "gesture", "gig", "glance", "glimpse", "globalization", "globe", "glorious", "glory", "golden", "goodness", "gorgeous", "governance", "grace", "graphic", "graphics", "grasp", "grave", "gravity", "greatly", "greenhouse", "grid", "grief", "grin", "grind", "grip", "gross", "guerrilla", "guidance", "guideline", "guilt", "gut", "habitat", "hail", "halfway", "halt", "handful", "handling", "handy", "harassment", "harbor", "hardware", "harmony", "harsh", "harvest", "hatred", "haunt", "hazard", "headquarters", "heal", "healthcare", "heighten", "helmet", "hence", "herb", "heritage", "hidden",
+"hierarchy", "high-profile", "hilarious", "hint", "hip", "historian", "homeland", "homeless", "honesty", "honey", "hook", "hopeful", "hopefully", "horizon", "horn", "hostage", "hostile", "hostility", "humanitarian", "humanity", "humble", "hunger", "hydrogen", "hypothesis", "icon", "ID", "identical", "identification", "ideological", "ideology", "idiot", "ignorance", "illusion", "imagery", "immense", "immigration", "imminent", "immune", "implement", "implementation", "implication", "imprison", "inability", "inadequate", "inappropriate", "incarcerate", "incarceration", "incentive", "incidence", "inclined", "inclusion", "incorporate", "incorrect", "incur", "independence", "index", "indication", "indicator", "indictment", "indigenous", "induce", "indulge", "inequality", "inevitable", "inevitably", "infamous", "infant", "infect", "infer", "inflation", "inflict", "influential", "info", "infrastructure", "inhabitant", "inherent", "inherit", "inhibit", "initiate", "inject", "injection", "injustice", "ink", "inmate", "innovation", "innovative", "input", "inquire", "insert", "insertion", "insider", "inspect", "inspection", "inspector", "inspiration", "installation", "instant", "instantly", "instinct", "institutional", "instruct", "instrumental", "insufficient", "insult", "intact", "intake", "integral", "integrate", "integrated", "integration", "integrity", "intellectual", "intensify", "intensity", "intensive", "intent", "interact", "interaction", "interactive", "interface", "interfere", "interference", "interim", "interior", "intermediate", "interpretation", "intersection", "interval", "intervene", "intervention", "intimate", "intriguing", "invade", "invasion", "inventory", "investigator", "investor", "invisible", "invoke", "involvement", "ironic", "ironically", "irony", "irrelevant", "isolate", "isolated", "isolation", "jail", "jet", "joint", "journalism", "judicial", "jurisdiction", "jury", "just", "justification", "keen", "kidnap", "kidney", "kindergarten", "kingdom", "kit", "ladder", "landing", "landlord", "landmark", "lane", "lap", "large-scale", "laser", "lately", "latter", "lawmaker", "lawn", "lawsuit", "layout", "leak", "leap", "legacy", "legend", "legendary", "legislation", "legislative", "legislature", "legitimate", "lengthy", "lens", "lesbian", "lesser", "lethal", "liable", "liberal", "liberation", "liberty", "lifelong", "lifetime", "lighting", "likelihood", "likewise", "limb", "limitation", "linear", "lineup", "linger", "listing", "liter", "literacy", "literally", "literary", "litter", "liver", "lobby", "log", "logic", "logo", "long-standing", "longtime", "loom", "loop", "lottery", "loyal", "loyalty", "lyric", "machinery", "magical", "magnetic", "magnificent", "magnitude", "mainland", "mainstream", "maintenance", "makeup", "making", "mandate", "mandatory", "manifest", "manipulate", "manipulation", "manufacture", "manufacturing", "manuscript", "marathon", "march", "margin", "marginal", "marine", "marker", "marketplace", "martial", "mask", "massacre", "mate", "mathematical", "mature", "maximize", "meaningful", "meantime", "mechanic", "mechanical", "mechanism", "medal", "medication", "medieval", "meditation", "melody", "membership", "memo", "memoir", "memorable", "memorial", "mentor", "merchant", "mercy", "mere", "merely", "merge", "merger", "merit", "metaphor", "methodology", "midst", "migration", "militant", "militia", "mill", "miner", "minimal", "minimize", "mining", "ministry", "minute", "miracle", "miserable", "misery", "misleading", "missile", "mob", "mobile", "mobility", "mobilize", "mode", "moderate", "modest", "modification", "module", "momentum", "monk", "monopoly", "monster", "monthly", "monument", "morality", "moreover", "mortgage", "mosque", "mosquito", "motion", "motivate", "motivation", "motive", "moving", "municipal", "mutual", "myth", "naked", "namely", "nasty", "nationwide", "naval", "navigation", "nearby", "necessity", "neglect", "negotiate", "negotiation", "neighboring", "nest", "net", "neutral", "newly", "newsletter", "niche", "nickel", "noble", "nod", "nominate", "nomination", "nominee", "nonetheless", "nonprofit",
+"nonsense", "noon", "norm", "notable", "notably", "notebook", "notify", "notorious", "novel", "novelist", "nowadays", "nursery", "nursing", "nutrition", "obesity", "objection", "oblige", "observer", "obsess", "obsession", "obstacle", "occasional", "occupation", "occupy", "occurrence", "odds", "offender", "offering", "offspring", "ongoing", "openly", "opera", "operational", "operator", "opt", "optical", "optimism", "optimistic", "oral", "orchestra", "organic", "organizational", "orientation", "originate", "outbreak", "outfit", "outing", "outlet", "outlook", "output", "outrage", "outsider", "outstanding", "overcome", "overlook", "overly", "overnight", "oversee", "overturn", "overwhelm", "overwhelming", "ownership", "oxygen", "packet", "pad", "palm", "panic", "parade", "parallel", "parameter",
+"parental", "parliament", "partial", "partially", "participation", "partnership", "part-time", "passing", "passionate", "passive", "password", "pastor", "patch", "patent", "pathway", "patience", "patrol", "patron", "pause", "peak", "peasant", "peculiar", "peer", "penalty", "pension", "perceive", "perception", "permanently", "persist", "persistent", "personnel", "petition", "pharmacy", "philosopher", "philosophical", "physician", "pill", "pioneer", "pipeline", "pirate", "pit", "pity", "placement", "plea", "plead", "pledge", "plug", "plunge", "pole", "poll", "pond", "pop", "portfolio", "portion", "portray", "postpone", "postwar", "potentially", "practitioner", "preach", "precede", "precedent", "precious", "precise", "precisely", "precision", "predator", "predecessor", "predictable", "predominantly",
+"preference", "pregnancy", "prejudice", "preliminary", "premier", "premise", "premium", "prescribe", "prescription", "presently", "preservation", "preside", "presidency", "presidential", "prestigious", "presumably", "presume", "prevail", "prevalence", "prevention", "prey", "pride", "primarily", "principal", "prior", "privatization", "privilege", "probability", "probable", "probe", "problematic", "proceed", "proceeding", "proceeds", "processing", "processor", "proclaim", "productive", "productivity", "profitable", "profound", "programming", "progressive", "prohibit", "projection", "prominent", "promising", "promotion", "prompt", "pronounced", "propaganda", "proportion", "proposition", "prosecute", "prosecution", "prosecutor", "prospective", "prosperity", "protective", "protein", "protester", "protocol", "province", "provincial", "provision", "provoke", "psychiatric", "psychological", "publicity", "publishing", "pulse", "pump", "punch", "punk", "purely", "pursuit", "puzzle", "query", "quest", "questionnaire", "quota", "racial", "racism", "racist", "radar", "radiation", "radical", "rage", "raid", "rail", "rally", "random", "ranking", "rape", "rat", "rating", "ratio", "rational", "ray", "readily", "realization", "realm", "rear", "reasonably", "reasoning", "reassure", "rebel", "rebellion", "rebuild", "receiver", "recession", "recipient", "reckon", "recognition", "reconstruction", "recount", "recovery", "recruit", "recruitment", "referee", "referendum", "reflection", "reform", "refuge", "refugee", "refusal", "regain", "regardless", "regime", "registration", "regulate", "regulator", "regulatory", "rehabilitation", "reign", "reinforce", "rejection", "relevance", "reliability", "relieve", "relieved", "reluctant", "remainder", "remains", "remarkable", "remarkably", "remedy", "reminder", "removal", "render", "renew", "renowned", "rental", "replacement", "reportedly", "reporting", "representation", "reproduce", "reproduction", "republic", "resemble", "reside", "residence", "residential", "residue", "resign", "resignation", "resistance", "resolution", "respective", "respectively", "restoration", "restore", "restraint", "restrict", "restriction", "resume", "résumé", "retail", "retirement", "retreat", "retrieve", "revelation", "revenge", "revenue", "reverse", "revision", "revival", "revive", "revolutionary", "rhetoric", "ridiculous", "rifle", "riot", "rip", "risky", "ritual", "rival", "rob", "robbery", "robust", "rock", "rocket", "rod", "romance", "rookie", "rose", "roster", "rotate", "rotation", "roughly", "ruin", "ruling", "rumor", "sacred", "sacrifice", "saint", "sake", "sanction", "satisfaction", "say", "scandal", "scare", "scattered", "scenario", "scholar", "scholarship", "scope", "scratch", "screening", "screw", "scrutiny", "seal", "secondly", "secular", "seeker", "seemingly", "segment", "seize", "seldom", "selective", "seminar", "sensation", "sensitivity", "sentiment", "separation", "serial", "settlement", "settler", "setup", "severely", "sexuality", "sexy", "shaped", "shareholder", "shatter", "shed", "sheer", "shipping", "shocking", "shoot", "shore", "shortage", "shortly", "short-term", "shrink", "shrug", "sibling", "sidewalk", "sigh", "signature", "significance", "simulate", "simulation", "simultaneously", "sin", "situated", "skeptical", "sketch", "skilled", "skip", "skull", "slam", "slap", "slash", "slavery", "slogan", "slot", "smash", "snap", "soak", "soar", "so-called", "socialist", "sole", "solely", "solidarity", "solo", "somehow", "sometime", "sophisticated", "sophomore", "sound", "sovereignty", "spam", "span", "spare", "spark", "specialize", "specialized", "specification", "specify", "specimen", "spectacle", "spectacular", "spectator", "spectrum", "speculate", "speculation", "spell", "sphere", "spice", "spill", "spin", "spine", "spite", "spoil", "spokesman", "spokesperson", "spokeswoman", "sponsorship", "spotlight", "spouse", "spy", "squad", "squeeze", "stab", "stability", "stabilize", "stake", "stall", "stance", "standing", "stark", "starve", "statistical", "steadily", "steam", "steer", "stem", "stereotype", "stimulate", "stimulus", "stir", "storage", "straightforward", "strain", "strand", "strategic", "strengthen", "strictly", "striking", "strip", "strive", "stroke", "structural", "stumble", "stun", "stunning", "submission", "subscriber", "subscription", "subsequent", "subsequently", "subsidy", "substantial", "substantially", "substitute", "substitution", "subtle", "suburb", "suburban", "succession", "successive", "successor", "suck", "sue", "suffering", "sufficient", "sufficiently", "suicide", "suite", "summit", "super", "superb", "superintendent", "superior", "supervise", "supervision", "supervisor", "supplement", "supportive", "supposedly", "suppress", "supreme", "surge", "surgeon", "surgical", "surplus", "surrender", "surveillance", "survival", "survivor", "suspend", "suspension", "suspicion", "suspicious", "sustain",
+"sustainable", "swallow", "swing", "sword", "symbolic", "sympathetic", "syndrome", "synthesis", "systematic", "tackle", "tactic", "tactical", "tag", "tap", "taxpayer", "technological", "teen", "temple", "temporarily", "tempt", "tenant", "tendency", "tender", "tension", "tenure", "terminal", "terminate", "terms", "terrain", "terribly", "terrific", "terrify", "territory", "terror", "terrorism", "terrorist", "testify", "testimony", "testing", "textbook", "texture", "thankfully", "theatrical", "theft", "theology", "theoretical", "therapist", "thereafter", "thereby", "thesis", "thorough", "thoroughly", "thoughtful", "thought-provoking", "thread", "threshold", "thrilled", "thrive", "thumb", "tide", "tighten", "timber", "timely", "timing", "tissue", "tobacco", "tolerance", "tolerate", "toll", "top",
+"torture", "toss", "total", "tournament", "toxic", "trace", "trademark", "trading", "tragedy", "tragic", "trail", "trailer", "trait", "transaction", "transcript", "transformation", "transit", "transmission", "transmit", "transparency", "transparent", "trap", "trauma", "treasure", "treaty", "tremendous", "tribal", "tribe", "tribute", "trigger", "trillion", "trio", "triumph", "troop", "trophy", "troubled", "trustee", "tsunami", "tuition", "tumor", "turnout", "turnover", "twist", "ultimate", "unacceptable", "uncertainty", "unconstitutional", "undergo", "undergraduate", "underlying", "undermine", "undertake", "undoubtedly", "unfold", "unfortunate", "unify", "unite", "unity", "universal", "unprecedented", "unveil", "upcoming", "upgrade", "uphold", "urgent", "usage", "useless", "utility", "utilize", "utterly",
+"vacuum", "vague", "valid", "validity", "vanish", "variable", "variation", "varied", "vein", "venture", "verbal", "verdict", "verify", "verse", "versus", "vertical", "vessel", "veteran", "viable", "vibrant", "vice", "vicious", "viewpoint", "violate", "violation", "virtue", "visa", "visible", "vocal", "voluntary", "voting", "vow", "vulnerability", "vulnerable", "wander", "ward", "warehouse", "warfare", "warming", "warrant", "warrior", "weaken", "weave", "weed", "weekly", "weird", "welfare", "well", "well-being", "whatsoever", "wheat", "whereby", "whip", "whoever", "wholly", "widen", "widespread", "widow", "width", "willingness", "wipe", "wisdom", "wit", "withdraw", "withdrawal", "wolf", "workforce", "workout", "workplace", "workshop", "worm", "worship", "worthwhile", "worthy", "wrist", "yell", "yield"
+
+];
+
+let knownWords = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}knownWords`)) || [];
+let reviewWords = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}reviewWords`)) || [];
+let currentList;
+
+const savedList = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}currentList`));
+
+if (savedList) {
+  currentList = savedList;
+} else {
+  currentList = allWords.filter(word => !knownWords.includes(word) && !reviewWords.includes(word));
+  shuffle(currentList);
+}
+
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+let currentWord = "";
+
+function updateCounter() {
+  const doneCount = knownWords.length;
+  document.getElementById("counter").innerText = "Words done: " + doneCount;
+}
+
+function updatePhaseMessage(isReviewing) {
+  const phaseEl = document.getElementById("phase");
+  phaseEl.innerText = isReviewing ? "🔁 You're now reviewing words you didn’t know before." : "";
+}
+
+function saveProgress() {
+  localStorage.setItem(`${STORAGE_PREFIX}knownWords`, JSON.stringify(knownWords));
+  localStorage.setItem(`${STORAGE_PREFIX}reviewWords`, JSON.stringify(reviewWords));
+   localStorage.setItem(`${STORAGE_PREFIX}currentList`, JSON.stringify(currentList));
+}
+
+function showWord() {
+  document.getElementById("definition").innerHTML = "";
+  if (currentList.length === 0) {
+    if (reviewWords.length > 0) {
+      currentList = [...reviewWords];
+      reviewWords = [];
+      shuffle(currentList);
+      updatePhaseMessage(true);
+    } else {
+      document.getElementById("word").innerHTML = `
+  <div style="margin-bottom: 0.1px;">Well done!🎉</div>
+  <div style="font-size: 0.6em; margin-top: 0;">Level 2 is coming</div>
+`;
+      updateCounter();
+      updatePhaseMessage(false);
+      saveProgress();
+      isAllDone = true;
+      return;
+    }
+  }
+  const randomIndex = Math.floor(Math.random() * currentList.length);
+  currentWord = currentList[randomIndex];
+  document.getElementById("word").innerText = currentWord;
+  updateCounter();
+  saveProgress();
+}
+
+function markKnown() {
+  if (isAllDone) return;
+  const index = currentList.indexOf(currentWord);
+  if (index !== -1) {
+    currentList.splice(index, 1);
+    knownWords.push(currentWord);
+  }
+  showWord();
+}
+
+function markUnknown() {
+  if (isAllDone) return;
+  const index = currentList.indexOf(currentWord);
+  if (index !== -1) {
+    currentList.splice(index, 1);
+    reviewWords.push(currentWord);
+  }
+  showWord();
+}
+
+function fetchDefinition() {
+  if (isAllDone) return;
+  const display = document.getElementById("definition");
+  display.innerHTML = "⏳ Looking up...";
+  const url = "https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(currentWord);
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const def = data[0]?.meanings?.[0]?.definitions?.[0];
+      if (!def) {
+        display.innerHTML = "Sorry, a quick definition for this word isn't available.";
+        return;
+      }
+      const meaning = def.definition;
+      const example = def.example ? `<br><i>Example:</i> "${def.example}"` : "";
+      display.innerHTML = `<b>${currentWord}</b>: ${meaning}${example}`;
+    })
+    .catch(err => {
+      display.innerHTML = "Sorry, the quick definition can't be loaded.";
+    });
+}
+
+function openCambridge() {
+  if (isAllDone) return;
+  const url = "https://dictionary.cambridge.org/dictionary/english/" + encodeURIComponent(currentWord);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function startOver() {
+  if (confirm("Are you sure you want to reset all progress?")) {
+    localStorage.removeItem(`${STORAGE_PREFIX}knownWords`);
+    localStorage.removeItem(`${STORAGE_PREFIX}reviewWords`);
+    localStorage.removeItem(`${STORAGE_PREFIX}currentList`);
+    location.reload();
+  }
+}
+
+function exportProgress() {
+  const data = {
+    knownWords,
+    reviewWords,
+    currentList,
+  };
+  const json = JSON.stringify(data);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Wordmu-Level2-Progress.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importProgress() {
+  const fileInput = document.getElementById("importFile");
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    try {
+      const data = JSON.parse(event.target.result);
+      knownWords = data.knownWords || [];
+      reviewWords = data.reviewWords || [];
+      currentList = data.currentList || [];
+      saveProgress();
+      location.reload();
+    } catch (e) {
+      alert("❌ Import failed. Not a valid progress file.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+
+let loadedVoices = [];
+
+function speak(accent) {
+  const word = currentWord;
+  if (!word || isAllDone) return;
+
+  let selectedVoice = null;
+
+  loadedVoices = speechSynthesis.getVoices();
+
+  const priorityVoices = loadedVoices.filter(v => {
+    if (accent === "UK") return v.lang === "en-GB";
+    if (accent === "US") return v.lang === "en-US";
+    return false;
+  });
+
+  // Prefer female voices if any
+  selectedVoice = priorityVoices.find(v => v.name.toLowerCase().includes("female")) || priorityVoices[0];
+
+  // Fallback to any English voice
+  if (!selectedVoice) {
+    selectedVoice = loadedVoices.find(v => v.lang.startsWith("en")) || null;
+  }
+
+  if (selectedVoice) {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.voice = selectedVoice;
+    speechSynthesis.speak(utterance);
+  } else {
+    alert("No voice found.");
+  }
+}
+
+function loadVoices() {
+  loadedVoices = speechSynthesis.getVoices();
+
+  if (loadedVoices.length === 0) {
+    const dummy = new SpeechSynthesisUtterance('');
+    dummy.volume = 0;
+    speechSynthesis.speak(dummy);
+
+    setTimeout(() => {
+      loadedVoices = speechSynthesis.getVoices();
+    }, 100);
+  }
+}
+
+speechSynthesis.onvoiceschanged = () => {
+  loadVoices();
+};
+
+function showTooltip() {
+  const tooltip = document.getElementById("tooltip");
+  const btn = document.getElementById("reset-btn");
+  const rect = btn.getBoundingClientRect();
+
+  tooltip.style.display = "block";
+  tooltip.style.left = (rect.left + window.scrollX) + "px";
+  tooltip.style.top = (rect.bottom + 10 + window.scrollY) + "px";
+}
+
+function hideTooltip() {
+  document.getElementById("tooltip").style.display = "none";
+}
+
+loadVoices();
+showWord();
+updatePhaseMessage(reviewWords.length > 0 && currentList.length === 0);
+</script>
+
+<footer style="text-align: center; margin-top: 40px; font-size: 0.7rem; color: #777;">
+  <strong>Wordmu Lv.2</strong> by <strong>Sarah Qodr</strong>. Do not resell, FREE for learners. Not affiliated with any official institution.
+</footer>
+
+
+
+
+</body>
+</html>
