@@ -5,7 +5,7 @@ This is Level 2 of Wordmu. You can access Level 1 here: https://sarahqodr.github
 Wordmu is a minimal vocabulary review tool, created by Sarah Qodr to help learners track known words and review the ones they’re unsure about. Best used on desktop with Google Chrome for full feature support.
 
 This Wordmu Level 2 features:
-- Contains 2000+ essential ADVANCED English words
+- Contains 1900+ essential ADVANCED English words
 - Words appear in random order
 - Choose whether you know the word or want to review it again later
 - Quick definition
