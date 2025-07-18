@@ -1,6 +1,6 @@
 # Wordmu Level 2
 
-This is the level 2 of Wordmu. Access the level 1 here: https://sarahqodr.github.io/wordmu/
+This is Level 2 of Wordmu. You can access Level 1 here: https://sarahqodr.github.io/wordmu/
 
 Wordmu is a minimal vocabulary review tool, created by Sarah Qodr to help learners track known words and review the ones they’re unsure about. Best used on desktop with Google Chrome for full feature support.
 
